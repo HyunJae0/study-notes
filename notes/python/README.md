@@ -36,9 +36,6 @@
 - 변수의 사용 범위
 - 클로저 (Closure)
 - 데코레이터 (Decorator)
-- 이터레이터
-- 제너레이터
-- 어노테이션
 
 ### [이터레이터, 제너레이터, 타입 어노테이션](./6-iterator-generator-annotation.md)
 
