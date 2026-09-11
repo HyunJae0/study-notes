@@ -873,6 +873,7 @@ discard()는 remove()와 달리, set 안에 제거할 원소가 없어도 에러
 
 ## #6 Mutable / Immutable Object
 
+### 6.1 Mutable Object
 객체(object)와 객체에 붙인 이름(name)을 구분해야 한다. 
 
 예를 들어 `x = 10`은 개념적으로 다음과 같이 객체에 붙인 이름은 데이터(객체)가 저장된 메모리 위치(실제 객체의 주소)를 가리킨다. 
@@ -896,7 +897,60 @@ print(a)
 여기서 핵심은 **새로운 list를 만든 것이 아니라 기존 list 객체를 변경했다는 것**이다. 
 > 리스트의 `append(x)`도 리스트 자체를 변경한다. 별도의 새로운 리스트를 반환하는 동작이 아니다.  
 
-반대로 immutable object는 **생성된 뒤 그 객체 자체를 변경할 수 없는 객체**이다. 대표적인 mutable type으로 `int`, `float`, `string`, `tuple`이 있다.
+cf) 리스트를 함수에 넘겨서, 함수 내부에서 리스트를 수정했는데, 함수 밖의 원본 리스트도 바뀌는 이유
+```python
+def add_item(lst):
+    lst.append(4)
+
+a = [1, 2, 3]
+add_item(a)
+
+print(a)
+>> [1, 2, 3, 4]
+```
+이 예시를 보면, 함수 안에서 `lst`를 수정했는데 함수 밖의 `a`도 바뀐 것을 볼 수 있다. 
+
+**list를 함수의 parameter로 넘기면 함수의 parameter가 원래 list에 대한 alias가 된다.**
+
+`a → [1, 2, 3]`였지만, `add_item(a)`를 호출하면, 함수 내부에서는 다음과 같이 `a`와 `lst`가 같은 list 객체를 가리킨다.
+```python
+a   ───┐
+       ├────→ [1, 2, 3]
+lst ───┘
+```
+이 상태에서 `lst.append(4)`를 하기 때문에, `lst`라는 변수 자체를 바꾸는 것이 아니라 그 변수가 가리키는 list 객체를 변화시킨다. 
+
+그래서 `print(a)` 결과가 `[1, 2, 3, 4]`가 되는 것이다. 
+
+이번에는 다음과 같이 함수 내에서 리스트를 재할당하는 경우
+```python
+def change(lst):
+    lst = [100, 200]
+
+a = [1, 2, 3]
+change(a)
+
+print(a)
+>> [1, 2, 3]
+```
+처음 함수에 들어갈 때는 다음과 같이 `a`와 `lst`가 같은 list 객체를 가리키지만,
+```python
+a   ───┐
+       ├────→ [1, 2, 3]
+lst ───┘
+```
+`lst = [100, 200]`은 기존 list를 수정하는 것이 아니라 **lst라는 이름을 새로운 list에 다시 연결(rebinding)**하는 것이기 때문이다.
+```python
+a   ─────→ [1, 2, 3]
+
+lst ─────→ [100, 200]
+```
+그래서 `a`는 그대로이다.
+
+
+### 6.2 Immutable Object
+
+immutable object는 **생성된 뒤 그 객체 자체를 변경할 수 없는 객체**이다. 대표적인 mutable type으로 `int`, `float`, `string`, `tuple`이 있다.
 
 예를 들어 다음과 같은 string이 있다고 하자.
 ```python
