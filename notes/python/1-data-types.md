@@ -9,6 +9,9 @@
 - [튜플](#3-튜플)
 - [딕셔너리](#4-딕셔너리)
 - [집합](#5-집합)
+- [집합](#5-집합)
+- [불변/가변 객체](#6-불변/가변)
+- [얕은 복사/깊은 복사](#7-얕은 복사/깊은 복사)
 
 ---
 
@@ -866,5 +869,252 @@ discard()는 remove()와 달리, set 안에 제거할 원소가 없어도 에러
 - 진부분집합: `s1 < s2`는 s1의 모든 원소가 s2에 있지만, s1 != s2인 경우
 - 상위집합: `s1 >= s2`, `s1.issuperset(s2)`는 반대로 s2의 모든 원소를 s1이 포함하는지를 검사한다.
 - 진상위집합: `s1 > s2`는 s2의 모든 원소를 s1이 포함하면서 s1 != s2인 경우
+
+---
+
+## #6 Mutable / Immutable Object
+
+객체(object)와 객체에 붙인 이름(name)을 구분해야 한다. 
+
+예를 들어 `x = 10`은 개념적으로 다음과 같이 객체에 붙인 이름은 데이터(객체)가 저장된 메모리 위치(실제 객체의 주소)를 가리킨다. 
+```python
+x  ─────→  10
+           object
+```
+
+mutable(가변)과 immutable(불변)은 변수가 메모리에서 가리키고 있는 데이터(객체)의 고유한 성질이다. 
+
+mutable object는 **생성된 뒤에도 그 객체 자체의 내부의 값을 변경할 수 있는 객체**이다. 대표적인 mutable type으로 `list`, `dict`, `set`이 있다. 
+
+예를 들어 다음과 같이 `list`에 값을 추가한다면
+```python
+a = [1, 2, 3]
+a[0] = 100
+
+print(a)
+>> [100, 2, 3]
+```
+여기서 핵심은 **새로운 list를 만든 것이 아니라 기존 list 객체를 변경했다는 것**이다. 
+> 리스트의 `append(x)`도 리스트 자체를 변경한다. 별도의 새로운 리스트를 반환하는 동작이 아니다.  
+
+반대로 immutable object는 **생성된 뒤 그 객체 자체를 변경할 수 없는 객체**이다. 대표적인 mutable type으로 `int`, `float`, `string`, `tuple`이 있다.
+
+예를 들어 다음과 같은 string이 있다고 하자.
+```python
+s = "hello"
+```
+
+여기서 문자열 `s`에 인덱스로 접근하여 다음과 같이 값을 바꾸는 것은 불가능하다.
+```python
+s[0] = "H"
+```
+
+왜냐하면 string 객체 자체는 변경할 수 없기 때문입니다. 
+
+이렇게 list와 string의 차이는 list의 원소는 변경할 수 있지만 string의 문자는 고정되어 있다.
+
+tuple도 마찬가지이다. 
+```python
+t = (1, 2, 3)
+
+t[0] = 100
+```
+인덱스 접근을 통해 값을 바꾸려고 하면 `TypeError`가 발생한다. 
+
+
+mutable과 immutable의 차이는 aliasing에서 잘 보인다.
+> aliasing은 두 개 이상의 변수가 메모리 상에서 동일한 객체를 가리키는 현상을 말한다.
+
+예를 들어 다음과 같이 mutable인 `list`를 `=`으로 복사한다고 하자.
+```python
+a = [1, 2]
+b = a
+```
+이것은 `a → [1, 2]`, `b → [1, 2]`처럼 리스트 두 개가 만들어진 것이 아니다. 
+
+`a`와 `b`라는 두 이름이 다음과 같이 **하나의 같은 리스트를 가리키게 된다.**
+```python
+a ───┐
+     ├────→ [1, 2]
+b ───┘
+```
+> `=`는 **기존 객체를 가리키는 추가 reference를 생성**한다. 복사 연산자가 아니다. 즉, `=`를 mutable object에 적용하면 clone이 아니라 alias를 만든다.
+
+그래서 `b.append(3)`처럼 `b`에 새로운 값을 추가할 경우, 이름 `a`와 `b`는 동일한 리스트를 가리키고 있기 때문에 다음과 같이 변한다. 
+```python
+a ───┐
+     ├────→ [1, 2, 3]
+b ───┘
+```
+
+**하나의 list에 두 개의 reference가 존재하기 때문이다.** 
+
+```python
+a = [1, 2]
+b = a
+
+b.append(3)
+
+print(a)
+print(b)
+>> [1, 2, 3]
+>> [1, 2, 3]
+```
+
+immutable은 다르게 동작한다. 예를 들어 `integer`의 경우
+```python
+a = 10
+b = a
+```
+
+그런 다음, `b = b + 1`를 하면 `a = 10`, `b = 11`이 된다.
+
+`b = b + 1`은 `10`이라는 immutable integer 객체 자체를 `11`로 바꾸는 것이 아니라, 다음과 같이 계산 결과인 `11`을 `b`에 다시 연결하기 때문이다. 
+- immutable 객체는 값이 변경될 수 없기 때문에, 새롭게 메모리를 할당해서 계산 결과를 생성하고, 그 주소를 `b`가 참조한 것이다. 
+```python
+a ─────→ 10
+
+b ─────→ 11
+```
+그러므로 `a`는 영향을 받지 않는다.
+
+---
+
+## 7. 얕은 복사(shallow copy)와 깊은 복사(deep copy)
+
+얕은 복사는 **바깥쪽 객체(top-level container)는 새로 만들지만, 내부에 들어 있는 객체들은 그대로 공유하는 복사 방식**이다. 
+
+예를 들어 다음과 같이 outer list 안에 inner lists이 있는 `a`에 대해 `copy()`로 복사본을 만들 경우 
+```python
+import copy
+
+a = [[1, 2], [3, 4]]
+b = copy.copy(a)
+
+print(id(a) == id(b))
+print(id(a[0]) == id(b[0]))
+print(id(a[1]) == id(b[1]))
+>> False
+>> True
+>> True
+```
+이 경우 `a`와 `b`라는 바깥쪽 list는 서로 다른 객체이다. 그러나 내부에 들어 있는 lists은 공유된다. 
+```
+a ─────→ [  •  ,  •  ]
+           │     │
+           │     │
+           ↓     ↓
+         [1,2] [3,4]
+           ↑     ↑
+           │     │
+b ─────→ [  •  ,  •  ]
+```
+
+즉, outer list a ≠ b이지만, inner lists은 공유된다. 
+
+
+이렇게 shallow copying은 list의 **top level만 복사하고 내부의 mutable elements는 복사하지 않는다.**
+
+그래서 바깥쪽 객체는 수정해도 서로 영향이 없다.
+```python
+a = [[1, 2], [3, 4]]
+b = copy.copy(a)
+
+b.append([5, 6])
+
+print(a)
+print(b)
+>> [[1, 2], [3, 4]]
+>> [[1, 2], [3, 4], [5, 6]]
+```
+`b.append()`는 `b`라는 바깥쪽 list 자체를 수정한다. `a`와 `b`의 바깥쪽 list는 서로 다른 객체이므로 `a`는 변하지 않는다.
+
+그러나 내부 list를 수정하면 문제가 생긴다. 내부 리스트가 동일한 주소를 참조하고 있기 때문이다.
+```python
+a = [[1, 2], [3, 4]]
+b = copy.copy(a)
+
+b[0].append(100) # 첫 번째 내부 리스트에 100 추가
+
+print(a)
+print(b)
+>> [[1, 2, 100], [3, 4]]
+>> [[1, 2, 100], [3, 4]]
+```
+
+`[:]` 슬라이싱을 이용한 복사도 얕은 복사이다. 예를 들어 `b = a[:]`를 사용하면 새로운 list가 만들어진다. 
+```python
+a = [1, 2, 3]
+b = a[:]
+
+print(id(a) == id(b))
+>> False
+```
+
+```python
+a = [[1, 2], [3, 4]]
+b = a[:]
+
+print(id(a) == id(b))
+print(id(a[0]) == id(b[0]))
+>> False
+>> True
+```
+
+중첩된 mutable 객체까지 서로 독립적으로 만들고 싶다면 **깊은 복사(deep copy)**를 사용해야 한다. 이는 `copy`모듈의 `deepcopy()`를 사용하면 된다.
+
+```python
+import copy
+
+a = [[1, 2], [3, 4]]
+b = copy.deepcopy(a)
+
+print(id(a) == id(b))
+print(id(a[0]) == id(b[0]))
+[12]
+0초
+import copy
+
+a = [[1, 2], [3, 4]]
+b = copy.deepcopy(a)
+
+print(id(a) == id(b))
+print(id(a[0]) == id(b[0]))
+>> False
+>> False
+```
+**outer list뿐 아니라 내부 mutable list들도 서로 다른 객체**가 된다.
+
+그래서 내부 list를 수정해도 원본이 변하지 않는다.
+```python
+a = [[1, 2], [3, 4]]
+b = copy.deepcopy(a)
+
+b[0].append(100)
+
+print(a)
+print(b)
+>> [[1, 2], [3, 4]]
+>> [[1, 2, 100], [3, 4]]
+```
+
+**shallow copy는 mmutable object가 내붕에 immutable objects을 가지고 있을 때 사용하면 된다.**
+
+```python
+a = [1, 2, 3]
+b = a.copy()
+
+b[0] = 100
+
+print(a) 
+print(b)
+>> [1, 2, 3]
+>> [100, 2, 3]
+```
+여기서 `1`, `2`, `3`은 immutable integer이다. 
+
+내부에서 공유하고 있다고 해도 `b[0] = 100`을 했을 때 `b`의 첫 번째 slot이 다른 integer를 가리키도록 바뀐다. 
+
+즉, shallow copy가 문제가 되는 경우는 mutable object 내부에 mutable objects가 들어 있을 때이다.
 
 ---
